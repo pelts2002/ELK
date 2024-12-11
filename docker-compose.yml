@@ -1,0 +1,54 @@
+version: '3.7'
+
+services:
+  elasticsearch:
+    image: elasticsearch:8.15.5
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"    # Порт для API Elasticsearch
+      - "9300:9300"    # Порт для внутренних соединений
+    environment:
+      - discovery.type=single-node  # Одиночный кластер (ИСПРАВИТЬ НА ПРОДАКШН)
+      - xpack.security.enabled=false  # Отключение безопасности для тестирования (не рекомендуется для продакшн)
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - elk
+    restart: unless-stopped
+
+  logstash:
+    image: logstash:8.15.5
+    container_name: logstash
+    ports:
+      - "5044:5044"    # Порт для получения данных (например, через Filebeat)
+    environment:
+      - LS_JAVA_OPTS=-Xmx256m -Xms256m   # ограничивает потребление памяти Logstash до 256 MB
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro # Перенос локального конфиг-файла в контейнер только для чтения (:ro)
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro  # Также для "файлы конфигурации для обработки данных - pipeline"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch # logstash запускается только после elasticsearch
+    restart: unless-stopped
+
+  kibana:
+    image: kibana:8.15.5
+    container_name: kibana
+    ports:
+      - "5601:5601"    # Порт для веб-интерфейса Kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+volumes:
+  elasticsearch-data:
+    driver: local
+
+networks:
+  elk:
+    driver: bridge
