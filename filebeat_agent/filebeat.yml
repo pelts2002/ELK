@@ -1,0 +1,50 @@
+filebeat.inputs:
+  # Сбор логов из Docker контейнеров
+  - type: container
+    paths:
+      - /var/lib/docker/containers/*/*.log
+    stream: stdout
+    ids:
+      - "*"
+    cri.parse_flags: true
+    combine_partial: true
+    exclude_files:
+      - \.gz$
+
+  # Сбор системных логов Linux
+  - type: log
+    paths:
+      - /var/log/*.log      # Основные системные логи
+    fields:
+      type: system_log      # Дополнительное поле для идентификации логов
+    fields_under_root: true
+    multiline.pattern: '^[[:space:]]'   # Объединение многострочных логов
+    multiline.negate: false
+    multiline.match: after
+
+processors:
+  - add_docker_metadata:
+      host: unix:///var/run/docker.sock
+
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+# Отправка данных в Logstash
+output.logstash:
+  hosts:
+    - 192.168.6.186:5044
+
+# Настройка логирования Filebeat
+logging.level: debug  # Изменено на 'debug' для сбора всех логов, включая информационные
+logging.to_files: true  # Включено логирование в файлы
+logging.to_syslog: true  # Включено логирование в системный журнал (syslog)
+logging.metrics.enabled: false  # Отключены метрики логирования
+logging.files:
+  path: /var/log/filebeat  # Путь для хранения логов
+  name: filebeat  # Имя файла логов
+  keepfiles: 7  # Количество файлов, которые будут храниться
+  permissions: 0644  # Разрешения на файлы логов
+
+ssl.verification_mode: none  # Отключение проверки SSL для упрощения подключения
