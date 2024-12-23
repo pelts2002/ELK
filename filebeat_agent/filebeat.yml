@@ -1,3 +1,4 @@
+# Настройки Filebeat
 filebeat.inputs:
   # Сбор логов из Docker контейнеров
   - type: container

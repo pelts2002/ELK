@@ -1,3 +1,4 @@
+# docker-compose для агента Filebeat (запуск docker-compose up -d)
 services:
   filebeat:
     image: elastic/filebeat:8.15.5
