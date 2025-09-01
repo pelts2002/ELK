@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  filebeat01:
+    image: elastic/filebeat:8.15.5
+    user: root
+    volumes:
+      - ./certs/:/usr/share/filebeat/certs/  # Откуда берутся сертификаты
+#      - filebeatdata01:/usr/share/filebeat/data
+      - ./filebeat_ingest_data/:/usr/share/logstash/ingest_data/  # Копируем локальную папку filebeat_ingest_data в контейнер. Оттуда считываются логи
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - HOSTNAME=${HOSTNAME}

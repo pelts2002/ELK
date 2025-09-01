@@ -1,0 +1,20 @@
+filebeat.inputs:
+  - type: filestream
+    id: default-filestream
+    paths:
+      - /usr/share/logstash/ingest_data/*.log
+
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+
+processors:
+  - add_docker_metadata: ~
+
+output.logstash:
+  hosts: ["192.168.*.*:5044"] # IP и порт Logstash
+  username: elastic
+  password: elastic
+  ssl.enabled: true  # ВКЛ/ВЫКЛ ssl
+  ssl.certificate_authorities: "certs/es01/es01.crt"
